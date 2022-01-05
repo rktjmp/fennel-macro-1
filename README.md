@@ -3,9 +3,10 @@
 Problem
 ---
 
-Macro is not generating call to `ipairs` in *second* `(it ...)` in complex test.
+Macro is not generating correct `for a b in p` in *second* `(it ...)` in
+complex test, it outputs `for a in b`.
 
-This is only present when running the code *not* output by `macrodebug`.
+This is only present when running the code **not** output by `macrodebug`.
 
 Quick
 ---
