@@ -15,13 +15,9 @@
   (local c (list ...))
 
   ; get setup if it exists and separate it from the tests if needed
-  (local (setup tests) (match (. c 1)
-                          :setup (extract-setup c)
-                          _ (create-setup c)))
-
-  ; we explicitly want each (it ...) to have a `context` var,
-  ; so enforce the symbol. gensym is no use for us.
-  (local context (sym :context))
+  (local (setup-fn tests) (match (. c 1)
+                            :setup (extract-setup c)
+                            _ (create-setup c)))
 
   ; (describe
   ;   "testing my module"
@@ -32,19 +28,22 @@
   ;   (it "test 2" (assert.equal context.inject :my-value))) <- "test" <-+
   ;                ^- test body ------------------------^
 
-  (local describe-body '(fn []))
-  (each [_ t (ipairs tests)]
-    (let [[_it name & test] t
-          ; create the function to pass to busted.it("testname", function)
-          test-body '(fn [])
-          ; start with the context variable
-          _ (table.insert test-body `(local ,context (,setup)))
-          ; insert each expression given
-          _ (each [_ expression (ipairs test)]
-              (table.insert test-body `,expression))
-          ; output form
-          it `(busted.it ,name ,test-body)]
-      (table.insert describe-body `,it)))
+  (fn build-test [[_it name & asserts]]
+    ; given (it "test_1" code code code)
+    ; create (b.it "test_1" (fn [] context code code code))
+    ; we explicitly want each (it ...) to have a `context` var,
+    ; so enforce the symbol. gensym is no use for us.
+    (let [func `(fn [] (local ,(sym :context) (,setup-fn)))
+          ; maybe this is a faux pas not using each here since i discard the
+          ; result, but its more uniform with the next function.
+          _ (icollect [_ assert (ipairs asserts) :into func]
+                      `,assert)]
+      `(busted.it ,name ,func)))
+
+  (fn build-describe-body [tests]
+    (icollect [_ test (ipairs tests) :into `(fn [])]
+                (build-test test)))
+  (local describe-body `,(build-describe-body tests))
 
   ; require busted needed in the real world to avoid recursion
   `(busted.describe
