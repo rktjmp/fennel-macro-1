@@ -4,11 +4,9 @@
 
 (macrodebug
 (describe
-  "tags"
-  :setup (let [parsed (icollect [_ remote (ipairs refs)]
-                                (remotes.parse remote))]
-           {:remotes parsed})
-  ; using two it forms breaks the second setup with no call to ipairs
+  "test suite"
+  :setup (collect [a b p] a)
+  ; using two it forms breaks the second setup, the for loop is generated incorrectly
   (it "test 1" (assert.true true))
   (it "test 2" (assert.false false)))
 ) ; macrodebug)
