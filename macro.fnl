@@ -11,11 +11,6 @@
   (fn create-setup [code]
     (values `(fn [] nil) code))
 
-  ; helper to generate (it ...) expressions
-  (fn make-test [code]
-    (let [[call name & test] code]
-      `(it ,name (fn [] ,test))))
-
   ; convert ... into something we can work on
   (local c (list ...))
 
