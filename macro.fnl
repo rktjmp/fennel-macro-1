@@ -28,19 +28,20 @@
   ; so enforce the symbol. gensym is no use for us.
   (local context (sym :context))
 
-  ; body holds the describe body, it will be a bunch of
-  ; consecutive function definitions which create the context var
-  ; and then calls `(it name (fn [] test-code))`. The functions
-  ; are called automatically at creation.
-  (local body '(do))
+  (local describe-body '(fn []))
   (each [_ t (ipairs tests)]
-    (let [t (make-test t)]
-      (table.insert body `((fn []
-                            (local ,context (,setup))
-                            ,t)))))
+    (let [[_it name & test] t
+          test-body '(fn [])
+          _ (each [_ expression (ipairs test)]
+              (table.insert test-body `,expression))
+          it `(it ,name ,test-body)]
+      (table.insert describe-body `(let [setup-fn# ,setup
+                                         ,context (setup-fn#)]
+                                     ,it))))
 
   ; require busted needed in the real world to avoid recursion
-  `((. (require :busted) :describe)
+  `(busted.describe
     ,name
-    (fn [] ,body)))
+    ,describe-body))
+
 {: describe}
