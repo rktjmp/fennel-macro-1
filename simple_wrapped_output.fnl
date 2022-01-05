@@ -1,15 +1,15 @@
 (busted.describe "testing my module"
                  (fn {}
-                   (let [setup-fn_6_auto (fn {}
-                                           {:inject :my-value})
-                         context (setup-fn_6_auto)]
-                     (it "test 1"
-                         (fn {}
-                           (assert.equal context.inject :my-value))))
-                   (let [setup-fn_6_auto (fn {}
-                                           {:inject :my-value})
-                         context (setup-fn_6_auto)]
-                     (it "test 2"
-                         (fn {}
-                           (assert.equal context.inject :my-value))))))
+                   (busted.it "test 1"
+                              (fn {}
+                                (local context
+                                       ((fn {}
+                                          {:inject :my-value})))
+                                (assert.equal context.inject :my-value)))
+                   (busted.it "test 2"
+                              (fn {}
+                                (local context
+                                       ((fn {}
+                                          {:inject :my-value})))
+                                (assert.equal context.inject :my-value)))))
 

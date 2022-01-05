@@ -28,16 +28,28 @@
   ; so enforce the symbol. gensym is no use for us.
   (local context (sym :context))
 
+  ; (describe
+  ;   "testing my module"
+  ;   :setup {:inject :my-value}
+  ;          ^- context ------^
+  ;   (it "test 1" (assert.equal context.inject :my-value)) <- "test"  <-+
+  ;                ^- test body ------------------------^                | describe body
+  ;   (it "test 2" (assert.equal context.inject :my-value))) <- "test" <-+
+  ;                ^- test body ------------------------^
+
   (local describe-body '(fn []))
   (each [_ t (ipairs tests)]
     (let [[_it name & test] t
+          ; create the function to pass to busted.it("testname", function)
           test-body '(fn [])
+          ; start with the context variable
+          _ (table.insert test-body `(local ,context (,setup)))
+          ; insert each expression given
           _ (each [_ expression (ipairs test)]
               (table.insert test-body `,expression))
-          it `(it ,name ,test-body)]
-      (table.insert describe-body `(let [setup-fn# ,setup
-                                         ,context (setup-fn#)]
-                                     ,it))))
+          ; output form
+          it `(busted.it ,name ,test-body)]
+      (table.insert describe-body `,it)))
 
   ; require busted needed in the real world to avoid recursion
   `(busted.describe
