@@ -43,7 +43,7 @@ Complex Test
 <
 ---
 > (macrodebug
-14c14
+12c12
 <
 ---
 > ) ; macrodebug)
@@ -54,10 +54,10 @@ Complex Test
   complex_wrapped.lua - compiled complex_wrapped_output.fnl
   diff complex.lua complex_wrapped.lua (no output expected)
 
-35c35
-<         for _ in remote do
+28c28
+<       for a in b do
 ---
->         for _, remote in ipairs(refs) do
+>       for a, b in p do
 ```
 
 Files
