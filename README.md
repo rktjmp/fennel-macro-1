@@ -10,10 +10,9 @@ This is only present when running the code *not* output by `macrodebug`.
 Quick
 ---
 
-./generate.sh
+Run `./generate.sh`
 
 ```
-λ ./generate.sh
 Simple
   simple.fnl - simple test
   simple_wrapped.fnl - simple test wrapped in macrodebug
@@ -28,7 +27,7 @@ Simple
 > ) ; macrodebug)
 Generating :
   simple.lua - compiled simple.fnl
-  simple_wrapped_output.fnl - output of running simple_wrapped.fnl
+  simple_wrapped_output.fnl - macrodebug output from running simple_wrapped.fnl
   simple_wrapped.lua - compiled simple_wrapped_output.fnl
   diff simple.lua simple_wrapped.lua (no output expected)
 Complex
@@ -45,7 +44,7 @@ Complex
 > ) ; macrodebug)
 Generating :
   complex.lua - compiled complex.fnl
-  complex_wrapped_output.fnl - output of running complex_wrapped.fnl
+  complex_wrapped_output.fnl - macrodebug output from running complex_wrapped.fnl
   complex_wrapped.lua - compiled complex_wrapped_output.fnl
   diff complex.lua complex_wrapped.lua (no output expected)
 35c35
@@ -53,6 +52,23 @@ Generating :
 ---
 >         for _, remote in ipairs(refs) do
 ```
+
+Files
+---
+
+- `simple.fnl`: a short demo, behaves as expected
+- `simple_wrapped.fnl`: the same as `simple.fnl` but the call is wrapped in `macrodebug`
+- `complex.fnl`: a complex (ish) demo that exhibits the bug
+- `complex_wrapped.fnl`: the same as `complex.fnl` but the call is wrapped in `macrodebug`
+
+Additionally generated files:
+
+- `simple.lua`: output of `fennel -c simple.fnl`
+- `simple_wrapped_output.fnl`: `fnlfmt`'d output from macrodebug
+- `simple_wrapped.lua`: output of `fennel -c simple_wrapped_output.fnl`
+- `complex.lua`: output of `fennel -c complex.fnl`
+- `complex_wrapped_output.fnl`: `fnlfmt`'d output from macrodebug
+- `complex_wrapped.lua`: output of `fennel -c complex_wrapped_output.fnl`
 
 Intention
 ---
@@ -139,294 +155,3 @@ The Macro
     ,name
     (fn [] ,body)))
 ```
-
-A simple test
----
-
-```
-; simple.fnl
-
-(import-macros {: describe} :macro)
-
-(describe
-  "testing my module"
-  :setup {:inject :my-value}
-  (it "test 1" (assert.equal context.inject :my-value))
-  (it "test 2" (assert.equal context.inject :my-value)))
-```
-
-via `(macrodebug)`
-
-```
-; simple_macrodebug_output.fnl
-((. (require :busted) :describe) "testing my module"
-                                 (fn {}
-                                   (do
-                                     ((fn {}
-                                        (local context
-                                               ((fn {}
-                                                  {:inject :my-value})))
-                                        (it "test 1"
-                                            (fn {}
-                                              [(assert.equal context.inject
-                                                             :my-value)]))))
-                                     ((fn {}
-                                        (local context
-                                               ((fn {}
-                                                  {:inject :my-value})))
-                                        (it "test 2"
-                                            (fn {}
-                                              [(assert.equal context.inject
-                                                             :my-value)])))))))
-```
-
-Looks correct.
-
-Check lua output:
-
-```
--- simple_compiled.lua
-local function _1_()
-  local function _2_()
-    local context
-    local function _3_()
-      return {inject = "my-value"}
-    end
-    context = _3_()
-    local function _4_()
-      return {assert.equal(context.inject, "my-value")}
-    end
-    return it("test 1", _4_)
-  end
-  _2_()
-  local function _5_()
-    local context
-    local function _6_()
-      return {inject = "my-value"}
-    end
-    context = _6_()
-    local function _7_()
-      return {assert.equal(context.inject, "my-value")}
-    end
-    return it("test 2", _7_)
-  end
-  return _5_()
-end
-return (require("busted")).describe("testing my module", _1_)
-```
-
-```
--- simple_macrodebug_compiled.lua
-local function _1_()
-  local function _2_()
-    local context
-    local function _3_()
-      return {inject = "my-value"}
-    end
-    context = _3_()
-    local function _4_()
-      return {assert.equal(context.inject, "my-value")}
-    end
-    return it("test 1", _4_)
-  end
-  _2_()
-  local function _5_()
-    local context
-    local function _6_()
-      return {inject = "my-value"}
-    end
-    context = _6_()
-    local function _7_()
-      return {assert.equal(context.inject, "my-value")}
-    end
-    return it("test 2", _7_)
-  end
-  return _5_()
-end
-return (require("busted")).describe("testing my module", _1_)
-```
-
-`diff simple_compiled.lua simple_macrodebug_compiled.lua`
-
-(empty, no differences)
-
-```
-```
-
-Complex Example
----
-
-Each `it` test should have its own `icollect` iteration.
-
-```
-; complex.fnl
-(import-macros {: describe} :macro)
-(describe
-  "tags"
-  :setup (let [parsed (icollect [_ remote (ipairs refs)]
-                                (remotes.parse remote))]
-           {:remotes parsed})
-  (it "test 1" (assert.true true))
-  (it "test 2" (assert.false false)))
-```
-
-```
-; complex_macrodebug_output.fnl
-((. (require :busted) :describe) :tags
-                                 (fn {}
-                                   (do
-                                     ((fn {}
-                                        (local context
-                                               ((fn {}
-                                                  (let [parsed (icollect [_ remote (ipairs refs)]
-                                                                 (remotes.parse remote))]
-                                                    {:remotes parsed}))))
-                                        (it "test 1"
-                                            (fn {}
-                                              [(assert.true true)]))))
-                                     ((fn {}
-                                        (local context
-                                               ((fn {}
-                                                  (let [parsed (icollect [_ remote (ipairs refs)]
-                                                                 (remotes.parse remote))]
-                                                    {:remotes parsed}))))
-                                        (it "test 2"
-                                            (fn {}
-                                              [(assert.false false)])))))))
-```
-
-Seems OK? Each context and test block looks appropriately scoped.
-
-View compiled lua
-
-```
-; complex_macrodebug_compiled.lua
-local function _1_()
-  local function _2_()
-    local context
-    local function _3_()
-      local parsed
-      do
-        local tbl_15_auto = {}
-        local i_16_auto = #tbl_15_auto
-        for _, remote in ipairs(refs) do
-          local val_17_auto = remotes.parse(remote)
-          if (nil ~= val_17_auto) then
-            i_16_auto = (i_16_auto + 1)
-            do end (tbl_15_auto)[i_16_auto] = val_17_auto
-          else
-          end
-        end
-        parsed = tbl_15_auto
-      end
-      return {remotes = parsed}
-    end
-    context = _3_()
-    local function _5_()
-      return {assert["true"](true)}
-    end
-    return it("test 1", _5_)
-  end
-  _2_()
-  local function _6_()
-    local context
-    local function _7_()
-      local parsed
-      do
-        local tbl_15_auto = {}
-        local i_16_auto = #tbl_15_auto
-        for _, remote in ipairs(refs) do
-          local val_17_auto = remotes.parse(remote)
-          if (nil ~= val_17_auto) then
-            i_16_auto = (i_16_auto + 1)
-            do end (tbl_15_auto)[i_16_auto] = val_17_auto
-          else
-          end
-        end
-        parsed = tbl_15_auto
-      end
-      return {remotes = parsed}
-    end
-    context = _7_()
-    local function _9_()
-      return {assert["false"](false)}
-    end
-    return it("test 2", _9_)
-  end
-  return _6_()
-end
-return (require("busted")).describe("tags", _1_)
-```
-
-Seems OK, each block has call to `ipairs(refs)`.
-
-Check running without going through macrodebug first
-
-```
-; complex_compiled.lua
-local function _1_()
-  local function _2_()
-    local context
-    local function _3_()
-      local parsed
-      do
-        local tbl_15_auto = {}
-        local i_16_auto = #tbl_15_auto
-        for _, remote in ipairs(refs) do
-          local val_17_auto = remotes.parse(remote)
-          if (nil ~= val_17_auto) then
-            i_16_auto = (i_16_auto + 1)
-            do end (tbl_15_auto)[i_16_auto] = val_17_auto
-          else
-          end
-        end
-        parsed = tbl_15_auto
-      end
-      return {remotes = parsed}
-    end
-    context = _3_()
-    local function _5_()
-      return {assert["true"](true)}
-    end
-    return it("test 1", _5_)
-  end
-  _2_()
-  local function _6_()
-    local context
-    local function _7_()
-      local parsed
-      do
-        local tbl_15_auto = {}
-        local i_16_auto = #tbl_15_auto
-        for _ in remote do
-          local val_17_auto = remotes.parse(remote)
-          if (nil ~= val_17_auto) then
-            i_16_auto = (i_16_auto + 1)
-            do end (tbl_15_auto)[i_16_auto] = val_17_auto
-          else
-          end
-        end
-        parsed = tbl_15_auto
-      end
-      return {remotes = parsed}
-    end
-    context = _7_()
-    local function _9_()
-      return {assert["false"](false)}
-    end
-    return it("test 2", _9_)
-  end
-  return _6_()
-end
-return (require("busted")).describe("tags", _1_)
-```
-
-Suddenly the second `for _ ...` is missing a call to ipairs
-
-`diff complex_compiled.lu complex_macrodebug_compiled.lua`
-
-```
-35c35
-<         for _ in remote do
----
->         for _, remote in ipairs(refs) do

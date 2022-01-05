@@ -11,7 +11,7 @@ echo "Generating :"
 echo "  simple.lua - compiled simple.fnl"
 fennel -c simple.fnl > simple.lua
 
-echo "  simple_wrapped_output.fnl - output of running simple_wrapped.fnl"
+echo "  simple_wrapped_output.fnl - macrodebug output from running simple_wrapped.fnl"
 fennel simple_wrapped.fnl > __temp && fnlfmt __temp > simple_wrapped_output.fnl && rm __temp
 
 echo "  simple_wrapped.lua - compiled simple_wrapped_output.fnl"
@@ -31,7 +31,7 @@ echo "Generating :"
 echo "  complex.lua - compiled complex.fnl"
 fennel -c complex.fnl > complex.lua
 
-echo "  complex_wrapped_output.fnl - output of running complex_wrapped.fnl"
+echo "  complex_wrapped_output.fnl - macrodebug output from running complex_wrapped.fnl"
 fennel complex_wrapped.fnl > __temp && fnlfmt __temp > complex_wrapped_output.fnl && rm __temp
 
 echo "  complex_wrapped.lua - compiled complex_wrapped_output.fnl"
