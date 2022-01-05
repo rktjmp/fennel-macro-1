@@ -13,10 +13,11 @@ Quick
 Run `./generate.sh`
 
 ```
-Simple
+Simple Test
   simple.fnl - simple test
   simple_wrapped.fnl - simple test wrapped in macrodebug
   diff simple.fnl simple_wrapped.fnl (two lines expected for macrodebug call)
+
 5c5
 <
 ---
@@ -25,15 +26,19 @@ Simple
 <
 ---
 > ) ; macrodebug)
-Generating :
+
+  Generating...
   simple.lua - compiled simple.fnl
   simple_wrapped_output.fnl - macrodebug output from running simple_wrapped.fnl
   simple_wrapped.lua - compiled simple_wrapped_output.fnl
   diff simple.lua simple_wrapped.lua (no output expected)
-Complex
+
+
+Complex Test
   complex.fnl - complex test
   complex_wrapped.fnl - complex test wrapped in macrodebug
   diff complex.fnl complex_wrapped.fnl (two lines expected for macrodebug call)
+
 5c5
 <
 ---
@@ -42,11 +47,13 @@ Complex
 <
 ---
 > ) ; macrodebug)
-Generating :
+
+  Generating...
   complex.lua - compiled complex.fnl
   complex_wrapped_output.fnl - macrodebug output from running complex_wrapped.fnl
   complex_wrapped.lua - compiled complex_wrapped_output.fnl
   diff complex.lua complex_wrapped.lua (no output expected)
+
 35c35
 <         for _ in remote do
 ---
