@@ -1,24 +1,10 @@
 (fn describe [name ...]
   ; accepts name, optionally :context code, (it "name" code) repeating
 
-  ; Given (:context value code), creates a function to return that value.
-  ; We also return the remaining code, sans (:context value) (i.e the (it ...) tests)
-  (fn extract-context [code]
-    (let [[_ data & rest] code]
-      (values `,data rest)))
-
-  ; called when no :context _ is given, creates a function to return nil
-  (fn create-context [code]
-    (values `nil code))
-
-  ; convert ... into something we can work on
-  (local c (list ...))
-
   ; get context if it exists and separate it from the tests if needed
-  (local (context-value tests) (match (. c 1)
-                                 :context (extract-context c)
-                                 _ (create-context c)))
-
+  (local (context-value tests) (match [...]
+                                 [:context data & tests] (values data tests)
+                                 tests (values nil tests)))
   ; (describe
   ;   "testing my module"
   ;   :context {:inject :my-value}
