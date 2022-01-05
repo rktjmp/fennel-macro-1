@@ -86,13 +86,13 @@ a `describe` block that wraps each `it` test.
 The macro should create a new/pristine `context` variable, available to each
 `it` test.
 
-The value of `context` can be given with the optional `:setup list` argument
+The value of `context` can be given with the optional `:context list` argument
 pair, or it defaults to nil.
 
 ```fnl
 (describe
   "testing my module"
-  :setup {:inject :my-value}
+  :context {:inject :my-value}
   (it "test 1" (assert.equal context.inject :my-value))
   (it "test 2" (assert.equal context.inject :my-value)))
 ```

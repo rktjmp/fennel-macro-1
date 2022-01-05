@@ -1,27 +1,27 @@
 (fn describe [name ...]
-  ; accepts name, optionally :setup code, (it "name" code) repeating
+  ; accepts name, optionally :context code, (it "name" code) repeating
 
-  ; gets given :setup value, creates a function to return that value
-  ; and returns the remaining code (i.e the (it ..) tests)
-  (fn extract-setup [code]
+  ; Given (:context value code), creates a function to return that value.
+  ; We also return the remaining code, sans (:context value) (i.e the (it ...) tests)
+  (fn extract-context [code]
     (let [[_ data & rest] code]
-      (values `(fn [] ,data) rest)))
+      (values `,data rest)))
 
-  ; called when no :setup _ is given, creates a function to return nil
-  (fn create-setup [code]
-    (values `(fn [] nil) code))
+  ; called when no :context _ is given, creates a function to return nil
+  (fn create-context [code]
+    (values `nil code))
 
   ; convert ... into something we can work on
   (local c (list ...))
 
-  ; get setup if it exists and separate it from the tests if needed
-  (local (setup-fn tests) (match (. c 1)
-                            :setup (extract-setup c)
-                            _ (create-setup c)))
+  ; get context if it exists and separate it from the tests if needed
+  (local (context-value tests) (match (. c 1)
+                                 :context (extract-context c)
+                                 _ (create-context c)))
 
   ; (describe
   ;   "testing my module"
-  ;   :setup {:inject :my-value}
+  ;   :context {:inject :my-value}
   ;          ^- context ------^
   ;   (it "test 1" (assert.equal context.inject :my-value)) <- "test"  <-+
   ;                ^- test body ------------------------^                | describe body
@@ -33,7 +33,7 @@
     ; create (b.it "test_1" (fn [] context code code code))
     ; we explicitly want each (it ...) to have a `context` var,
     ; so enforce the symbol. gensym is no use for us.
-    (let [func `(fn [] (local ,(sym :context) (,setup-fn)))
+    (let [func `(fn [] (local ,(sym :context) ,context-value))
           ; maybe this is a faux pas not using each here since i discard the
           ; result, but its more uniform with the next function.
           _ (icollect [_ assert (ipairs asserts) :into func]
