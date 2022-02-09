@@ -1,38 +1,70 @@
 # Readme
 
+Requirements
+---
+
+- `fennel` in your path or as `fennel-head` in working directory
+- `fnlfmt` in your path
+
 Problem
 ---
 
-Macro is not generating correct `for a b in p` in *second* `(it ...)` in
-complex test, it outputs `for a in b`.
+The macro is not generating a correct `for a b in p` in the *second* `(it ...)`
+in complex test, it outputs in incorrect iterator, `for a in b`.
 
 This is only present when running the code **not** output by `macrodebug`.
 
-Quick
+About
 ---
 
-Run `./generate.sh`
+Two examples are included, `simple.fnl` and `complex.fnl`. They both have a
+paired `simple_wrapped.fnl` and `complex_wrapped.fnl` that just wraps the code
+in `(macrodebug)` calls.
+
+`macro.fnl` is the macro that exhibits the bug (see also [Intention](#intention) below).
+
+`simple.fnl` does not exhibit the issue, `complex.fnl` does.
+
+To view the test, run `./generate.sh`. It will check the current directory for
+a `fennel-head` file, which it assumes to be a built fennel executable. If not
+present it will attempt to run the test via whatever `which fennel` resolves
+to.
+
+See below an example output. The `simple` test produces the same output in both
+the naked and wrapped forms. The `complex` test produces different output depending on
+whether the macro call is wrapped in `macrodebug`, **additionally the code
+generated without `macrodebug` is incorrect, resulting in `for a in b` instead
+of `for a,b in p`.**
 
 ```
+./generate.sh
+
+using fennel version
+Fennel 1.0.1-dev on PUC Lua 5.4
+
 Simple Test
   simple.fnl - simple test
   simple_wrapped.fnl - simple test wrapped in macrodebug
   diff simple.fnl simple_wrapped.fnl (two lines expected for macrodebug call)
-
+  expects macrodebug calls in diff after here  vvvv
 5c5
-<
+< 
 ---
 > (macrodebug
 11c11
-<
+< 
 ---
 > ) ; macrodebug)
+  expects macrodebug calls in diff before here ^^^^
 
   Generating...
   simple.lua - compiled simple.fnl
   simple_wrapped_output.fnl - macrodebug output from running simple_wrapped.fnl
   simple_wrapped.lua - compiled simple_wrapped_output.fnl
-  diff simple.lua simple_wrapped.lua (no output expected)
+  diff simple.lua simple_wrapped.lua
+
+  expects no output after here  vvvv
+  expects no output before here ^^^^
 
 
 Complex Test
@@ -40,14 +72,16 @@ Complex Test
   complex_wrapped.fnl - complex test wrapped in macrodebug
   diff complex.fnl complex_wrapped.fnl (two lines expected for macrodebug call)
 
+  expects macrodebug calls in diff after here  vvvv
 5c5
-<
+< 
 ---
 > (macrodebug
-12c12
-<
+19c19
+< 
 ---
 > ) ; macrodebug)
+  expects macrodebug calls in diff before here ^^^^
 
   Generating...
   complex.lua - compiled complex.fnl
@@ -55,10 +89,12 @@ Complex Test
   complex_wrapped.lua - compiled complex_wrapped_output.fnl
   diff complex.lua complex_wrapped.lua (no output expected)
 
-28c28
+  expects no output after here  vvvv
+25c25
 <       for a in b do
 ---
 >       for a, b in p do
+  expects no output before here ^^^^
 ```
 
 Files
@@ -112,9 +148,3 @@ Should produce something like this hand coded call:
         (local context {:inject :my-value})
         (assert.equal context.inject :my-value)))))
 ```
-
-The Macro
----
-
-See macro.fnl
-

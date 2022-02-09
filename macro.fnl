@@ -16,12 +16,10 @@
 
   (fn build-test [[_it name & asserts]]
     ; given (it "test_1" code code code)
-    ; create (b.it "test_1" (fn [] context code code code))
+    ; create (busted.it "test_1" (fn [] context code code code))
     ; we explicitly want each (it ...) to have a `context` var,
     ; so enforce the symbol. gensym is no use for us.
     (let [func `(fn [] (local ,(sym :context) ,context-value))
-          ; maybe this is a faux pas not using each here since i discard the
-          ; result, but its more uniform with the next function.
           _ (icollect [_ assert (ipairs asserts) :into func]
                       `,assert)]
       `(busted.it ,name ,func)))
